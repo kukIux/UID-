@@ -19,16 +19,15 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Set up Android NDK
-        uses: nttld/setup-ndk@v1
-        id: setup-ndk
-        with:
-          ndk-version: r27d          # = 27.3.13750724
-          add-to-path: false
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android NDK 27.3.13750724
+        run: |
+          sdkmanager --install "ndk;27.3.13750724"
+          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/27.3.13750724" >> "$GITHUB_ENV"
 
       - name: Build module
-        env:
-          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
         run: |
           python tools/uid-seccomp-module/build.py --module-only
 
