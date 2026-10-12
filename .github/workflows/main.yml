@@ -19,13 +19,19 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Download Android NDK r27d (27.3.13750724)
+        uses: nttld/setup-ndk@v1
+        id: setup-ndk
+        with:
+          ndk-version: r27d
+          add-to-path: false
 
-      - name: Install Android NDK 27.3.13750724
+      - name: Expose NDK under the exact expected version path
         run: |
-          sdkmanager --install "ndk;27.3.13750724"
-          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/27.3.13750724" >> "$GITHUB_ENV"
+          mkdir -p /opt/android-sdk/ndk
+          ln -s "${{ steps.setup-ndk.outputs.ndk-path }}" /opt/android-sdk/ndk/27.3.13750724
+          echo "ANDROID_NDK_HOME=/opt/android-sdk/ndk/27.3.13750724" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=/opt/android-sdk" >> "$GITHUB_ENV"
 
       - name: Build module
         run: |
