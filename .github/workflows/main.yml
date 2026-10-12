@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -19,21 +19,16 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Download Android NDK r27d (27.3.13750724)
+      - name: Set up Android NDK
         uses: nttld/setup-ndk@v1
         id: setup-ndk
         with:
-          ndk-version: r27d
+          ndk-version: r27d        # 27.3.13750724
           add-to-path: false
 
-      - name: Expose NDK under the exact expected version path
-        run: |
-          mkdir -p /opt/android-sdk/ndk
-          ln -s "${{ steps.setup-ndk.outputs.ndk-path }}" /opt/android-sdk/ndk/27.3.13750724
-          echo "ANDROID_NDK_HOME=/opt/android-sdk/ndk/27.3.13750724" >> "$GITHUB_ENV"
-          echo "ANDROID_SDK_ROOT=/opt/android-sdk" >> "$GITHUB_ENV"
-
       - name: Build module
+        env:
+          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
         run: |
           python tools/uid-seccomp-module/build.py --module-only
 
