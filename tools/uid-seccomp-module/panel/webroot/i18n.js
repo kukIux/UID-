@@ -1,7 +1,8 @@
 (() => {
   'use strict';
   const preferred = navigator.languages?.[0] || navigator.language || 'en';
-  const lang = /^zh(?:[-_]|$)/i.test(preferred) ? 'zh' : 'en';
+  const p = String(preferred).toLowerCase();
+  const lang = /^zh(?:[-_]|$)/.test(p) ? 'zh' : /^uk(?:[-_]|$)/.test(p) ? 'uk' : 'en';
   const messages = {
     zh: {
       title: 'UID 过滤', refresh: '刷新模块状态', enable: '启用过滤', loading: '正在读取模块状态…',
@@ -46,11 +47,33 @@
       defaultsAdded: 'Default packages added. Save to apply.', emptyScope: 'Add at least one target package.',
       saving: 'Saving and applying changes…', savedReboot: 'Configuration saved. Restart your phone to load the new module.',
       applied: 'Saved and applied. Reopen the selected apps.'
+    },
+    uk: {
+      title: 'Фільтр UID', refresh: 'Оновити стан модуля', enable: 'Увімкнути фільтрацію', loading: 'Зчитування стану модуля…',
+      scope: 'Цільові додатки', defaults: 'Додати типові', scopeHelp: 'Фільтрація діє лише для пакетів зі списку нижче. Додавайте або видаляйте пакети за потреби.',
+      inputLabel: 'Додати назву пакета', placeholder: 'напр. com.example.app', add: 'Додати', listLabel: 'Список цільових пакетів',
+      emptyTitle: 'Цільових додатків ще немає', emptyHelp: 'Введіть назву пакета або додайте типові.', about: 'Як користуватися',
+      aboutBefore: 'Фільтрує виклики ', aboutAfter: ' у вибраних додатках, щоб уникнути виявлення.',
+      applyHelp: 'Збереження й застосування зупиняє лише ті додатки, для яких змінився стан фільтрації. Відкрийте їх знову, щоб зміни набули чинності. Додатки поза списком не зачіпаються. Дані додатків зберігаються.',
+      connecting: 'Підключення до модуля', save: 'Зберегти й застосувати', builtin: 'Вбудований', remove: 'Видалити {package}',
+      removed: 'Пакет видалено. Збережіть, щоб застосувати.', processing: 'Обробка…', wait: 'Зачекайте', disconnected: 'Модуль не підключено',
+      unsaved: 'Є незбережені зміни', saved: 'Конфігурацію збережено', selected: 'Вибрано додатків: {count}', selectedOne: 'Вибрано додатків: {count}',
+      pendingSave: ' · Збережіть, щоб застосувати', disablePending: 'Збережіть, щоб вимкнути фільтрацію', disabled: 'Фільтрацію вимкнено',
+      updateNotice: 'Очікується оновлення. Перезавантажте телефон, щоб завантажити новий модуль.',
+      disabledNotice: 'Модуль вимкнено в менеджері. Увімкніть фільтрацію та збережіть, щоб увімкнути його.',
+      missingBridge: 'Відкрийте цю панель із WebUI вашого менеджера модулів.', timeout: 'Час очікування операції вичерпано. Оновіть стан, щоб перевірити результат.',
+      operationFailed: 'Помилка операції модуля', invalidResponse: 'Модуль повернув недійсну відповідь. Відкрийте панель знову.',
+      invalidConfig: 'Конфігурація модуля недійсна.', saveBeforeRefresh: 'Збережіть зміни перед оновленням.',
+      invalidPackage: 'Введіть повну назву пакета, наприклад com.example.app.', duplicate: 'Цей пакет уже є у списку.',
+      limit: 'Можна додати не більше 128 пакетів.', added: 'Пакет додано. Збережіть, щоб застосувати.', toggleChanged: 'Натисніть «Зберегти й застосувати», щоб застосувати зміни.',
+      defaultsAdded: 'Типові пакети додано. Збережіть, щоб застосувати.', emptyScope: 'Додайте принаймні один цільовий пакет.',
+      saving: 'Збереження та застосування змін…', savedReboot: 'Конфігурацію збережено. Перезавантажте телефон, щоб завантажити новий модуль.',
+      applied: 'Збережено й застосовано. Відкрийте вибрані додатки знову.'
     }
   };
   const t = (key, values = {}) => (messages[lang][key] ?? messages.en[key] ?? key)
     .replace(/\{(\w+)\}/g, (match, name) => values[name] ?? match);
-  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : lang;
   document.title = t('title') + ' · 泷泽';
   document.querySelectorAll('[data-i18n]').forEach(node => { node.textContent = t(node.dataset.i18n); });
   for (const attribute of ['aria-label', 'title', 'placeholder']) {
