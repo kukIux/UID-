@@ -41,7 +41,9 @@ status() {
     enabled=false; [ "$(head -n 1 "$STORE/config")" = enabled=1 ] && enabled=true
     disabled=false; [ ! -f "$CURRENT/disable" ] || disabled=true
     pending=false; [ ! -f "$CURRENT/update" ] || pending=true
-    printf '{"enabled":%s,"moduleDisabled":%s,"pendingUpdate":%s,"version":"0.2.4","packages":[' "$enabled" "$disabled" "$pending"
+    version=$(sed -n 's/^version=//p' "$MODDIR/module.prop" 2>/dev/null | head -n 1 | tr -d '\r')
+    case "$version" in ''|*[!0-9A-Za-z._+-]*) version=unknown;; esac
+    printf '{"enabled":%s,"moduleDisabled":%s,"pendingUpdate":%s,"version":"%s","packages":[' "$enabled" "$disabled" "$pending" "$version"
     comma=''
     tail -n +2 "$STORE/config" | while IFS= read -r package; do
         printf '%s"%s"' "$comma" "$package"; comma=,

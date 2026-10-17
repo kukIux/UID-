@@ -1,5 +1,5 @@
 from pathlib import Path
-import argparse, hashlib, json, os, subprocess, zipfile
+import argparse, hashlib, json, os, re, subprocess, zipfile
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
@@ -8,8 +8,8 @@ SDK = Path(os.environ.get('ANDROID_SDK_ROOT') or os.environ.get('ANDROID_HOME') 
 NDK = Path(os.environ.get('ANDROID_NDK_HOME') or str(SDK / 'ndk/27.3.13750724')) / 'toolchains/llvm/prebuilt/windows-x86_64'
 HEADER = ROOT / 'third_party/zygisk/zygisk.hpp'
 HEADER_SHA = 'f8d55e8b4f89d418c5941afe62ce6a09ddec1f4afd9a1b0a01eb40a93310dd28'
-VERSION = '0.2.6'
-VERSION_CODE = 8
+VERSION = '0.2.8'
+VERSION_CODE = 10
 DEFAULT_OUTPUT = ROOT / 'build' / VERSION
 
 def main():
@@ -31,7 +31,7 @@ def main():
               '-Wl,-z,max-page-size=16384', '-Wl,-z,relro,-z,now', '-fvisibility=hidden']
     library = build / 'module/zygisk/arm64-v8a.so'
     local_cxa = ROOT / 'third_party/local_cxa'
-    run(common + ['-I', HEADER.parent, HERE / 'module.cpp', local_cxa / 'atexit.cpp',
+    run(common + ['-I', HEADER.parent, HERE / 'module.cpp', HERE / 'broker.cpp', local_cxa / 'atexit.cpp',
                   '-Wl,--version-script=' + str(HERE / 'exports.map'), '-Wl,--strip-all',
                   '-ldl', '-o', library])
     # Fail the build if cleanup accidentally binds to the process-wide registry.
@@ -39,6 +39,7 @@ def main():
                              capture_output=True, text=True, check=True, timeout=20).stdout
     assert '__cxa_atexit' not in symbols and '__cxa_finalize' not in symbols
     assert 'zygisk_module_entry' in symbols
+    assert 'zygisk_companion_entry' in symbols
     assert b'atexit' not in library.read_bytes(), 'Unexpected exit-handler symbol strings in release library'
     (build / 'module/module.prop').write_text(f'id=cq_uid_seccomp\nname=UID 过滤\nversion={VERSION}\nversionCode={VERSION_CODE}\nauthor=泷泽\ndescription=通过过滤指定包的`getpriority(PRIO_USER)`  做到规避检测\n', encoding='utf-8', newline='\n')
     (build / 'module/skip_mount').write_bytes(b'')
@@ -47,6 +48,11 @@ def main():
             target = build / 'module' / path.relative_to(HERE / 'panel')
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(path.read_bytes().replace(b'\r\n', b'\n'))
+    page = build / 'module/webroot/index.html'
+    html, count = re.subn(r'(<span id="version">)[^<]*(</span>)',
+                          lambda match: match[1] + VERSION + match[2], page.read_text(encoding='utf-8'))
+    assert count == 1, 'Expected one panel version element'
+    page.write_text(html, encoding='utf-8', newline='\n')
     if args.config:
         (build / 'module/defaults').write_bytes(args.config.read_bytes().replace(b'\r\n', b'\n'))
     (build / 'module/config').write_bytes((build / 'module/defaults').read_bytes())

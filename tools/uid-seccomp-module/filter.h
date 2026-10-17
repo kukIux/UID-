@@ -46,9 +46,8 @@ inline std::vector<sock_filter> make_rule(uint32_t self, const std::vector<uint3
 
 // Redirect only the platform policy's ALLOW leaves. Denials, architecture
 // checks and all existing relative jumps retain their original behavior.
-inline bool merge(const sock_fprog& platform, uint32_t self, std::vector<sock_filter>& output) {
+inline bool merge_rule(const sock_fprog& platform, uint32_t self, const std::vector<sock_filter>& rule, std::vector<sock_filter>& output) {
     if (!platform.filter || !platform.len || self % 100000 < 10000 || self % 100000 > 19999) return false;
-    const auto rule = make_rule(self, {}, true);
     if (platform.len > BPF_MAXINSNS - rule.size()) return false;
     bool has_allow = false;
     for (size_t i = 0; i < platform.len; ++i) {
@@ -67,6 +66,10 @@ inline bool merge(const sock_fprog& platform, uint32_t self, std::vector<sock_fi
     }
     output.insert(output.end(), rule.begin(), rule.end());
     return true;
+}
+
+inline bool merge(const sock_fprog& platform, uint32_t self, std::vector<sock_filter>& output) {
+    return merge_rule(platform,self,make_rule(self,{},true),output);
 }
 
 // Compatibility fallback for loaders that cannot intercept the platform policy.
